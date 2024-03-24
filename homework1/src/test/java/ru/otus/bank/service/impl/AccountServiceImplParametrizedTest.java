@@ -46,7 +46,7 @@ public class AccountServiceImplParametrizedTest {
         when(accountDao.findById(eq(2L))).thenReturn(Optional.of(destinationAccount));
 
         assertEquals(expected, accountServiceImpl.makeTransfer(1L, 2L, transferAmount));
-        }
+    }
 
     @ParameterizedTest
     @MethodSource("provideParameters")
