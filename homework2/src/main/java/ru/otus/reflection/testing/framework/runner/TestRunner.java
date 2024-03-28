@@ -1,6 +1,7 @@
 package ru.otus.reflection.testing.framework.runner;
 
 import ru.otus.reflection.testing.framework.core.TestCore;
+import ru.otus.reflection.testing.framework.core.TestUtils;
 import ru.otus.reflection.testing.framework.entity.TestResult;
 import ru.otus.reflection.testing.framework.exception.TestException;
 
@@ -18,6 +19,11 @@ public class TestRunner {
     }
 
     public static void runAllTests(Class<?> cls) throws RuntimeException {
+        if (TestUtils.isTestClassDisabled(cls)) {
+            System.out.println("========= Tests for class " + "[" + cls + "] disabled! ===========");
+            return;
+        }
+
         System.out.println("========= Run tests for class " + "[" + cls + "]" + " ===========");
 
         TestCore testCore = new TestCore(cls, instanceTestingObject(cls));

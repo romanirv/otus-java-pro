@@ -1,16 +1,15 @@
 package ru.otus.reflection.testing.framework.core;
 
-import ru.otus.reflection.testing.framework.api.AfterSuite;
-import ru.otus.reflection.testing.framework.api.BeforeSuite;
-import ru.otus.reflection.testing.framework.api.Test;
+import ru.otus.reflection.testing.framework.api.*;
 import ru.otus.reflection.testing.framework.entity.TestResult;
 import ru.otus.reflection.testing.framework.exception.TestException;
 
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Optional;
+import java.util.List;
+import java.util.ArrayList;
 
 public class TestCore {
 
@@ -37,28 +36,55 @@ public class TestCore {
     public List<TestResult> runTests() {
         List<TestResult> results = new ArrayList<>();
 
-        List<Method> testMethods = getMethodsWithTestAnnotations();
+        List<Method> testMethods = TestUtils.getMethodsWithTestAnnotations(cls);
+        List<Method> beforeTestsMethods = TestUtils.getBeforeTestsMethod(cls);
+        List<Method> afterTestsMethods = TestUtils.getAfterMethods(cls);
+
         int currTestIdx = 1;
         boolean status = false;
 
         for (Method method : testMethods) {
+            if (TestUtils.isTestClassDisabled(method)) {
+                continue;
+            }
+
+            for (Method beforeMethod : beforeTestsMethods) {
+                try {
+                    beforeMethod.invoke(instance);
+                } catch (InvocationTargetException | IllegalAccessException e) {
+                    e.getCause().printStackTrace();
+                }
+            }
+
+            boolean requiredCatchException = TestUtils.isTestRequiredException(method);
+
             try {
                 method.invoke(instance);
-                status = true;
+                status = !requiredCatchException;
             } catch (Exception e) {
-                e.getCause().printStackTrace();
-                status = false;
+                status = requiredCatchException && TestUtils.isInTestExpectedException(method, e.getCause().getClass());
+                if (!status) {
+                    e.getCause().printStackTrace();
+                }
             }
 
             results.add(new TestResult(method.getName(), currTestIdx, status));
             ++currTestIdx;
+
+            for (Method afterMethod : afterTestsMethods) {
+                try {
+                    afterMethod.invoke(instance);
+                } catch (InvocationTargetException | IllegalAccessException e) {
+                    e.getCause().printStackTrace();
+                }
+            }
         }
 
         return results;
     }
 
     public void runAfterSuite() {
-        Optional<Method> afterSuiteMethod = getAfterSuiteMethod();
+        Optional<Method> afterSuiteMethod = TestUtils.getAfterSuiteMethod(cls);
         if (afterSuiteMethod.isPresent()) {
             try {
                 afterSuiteMethod.get().invoke(instance);
@@ -70,42 +96,13 @@ public class TestCore {
     }
 
     private Optional<Method> getBeforeSuiteMethod() {
-        List<Method> methods = findMethodsWithAnnotation(this.cls, BeforeSuite.class);
+        List<Method> methods = TestUtils.findMethodsWithAnnotation(cls, BeforeSuite.class);
         if (methods.size() > 1) {
             throw new TestException("Class " + cls + " has " + methods.size() +
                     " methods with annotation BeforeSuite");
         }
 
         return methods.stream().findFirst();
-    }
-
-    private List<Method> getMethodsWithTestAnnotations() {
-        return Arrays.stream(cls.getDeclaredMethods())
-                .filter(TestCore::isTestMethod)
-                .sorted(Comparator.comparingInt((Method m) -> m.getAnnotation(Test.class).priority()).reversed())
-                .toList();
-    }
-
-    private Optional<Method> getAfterSuiteMethod() {
-        List<Method> methods = findMethodsWithAnnotation(cls, AfterSuite.class);
-        if (methods.size() > 1) {
-            throw new TestException("Class " + cls +
-                    " has " + methods.size() + " methods with annotation AfterSuite");
-        }
-
-        return methods.stream().findFirst();
-    }
-
-    private static List<Method> findMethodsWithAnnotation(Class<?> cls, Class<? extends Annotation > annotationType) {
-        return Arrays.stream(cls.getDeclaredMethods())
-                .filter(m -> m.isAnnotationPresent(annotationType))
-                .toList();
-    }
-
-    private static boolean isTestMethod(Method method) {
-        return method.isAnnotationPresent(Test.class)
-                && method.getAnnotation(Test.class).priority() >= TestUtils.MIN_PRIORITY
-                && method.getAnnotation(Test.class).priority() <= TestUtils.MAX_PRIORITY;
     }
 }
 
