@@ -3,16 +3,14 @@ package ru.otus.reflection.testing.framework.core;
 import ru.otus.reflection.testing.framework.api.AfterSuite;
 import ru.otus.reflection.testing.framework.api.BeforeSuite;
 import ru.otus.reflection.testing.framework.api.Test;
+import ru.otus.reflection.testing.framework.entity.TestResult;
 import ru.otus.reflection.testing.framework.exception.TestException;
 
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class TestCore {
 
@@ -36,30 +34,27 @@ public class TestCore {
         }
     }
 
-    public void runTests() {
-        int successCount = 0;
-        int errorCount = 0;
+    public List<TestResult> runTests() {
+        List<TestResult> results = new ArrayList<>();
 
         List<Method> testMethods = getMethodsWithTestAnnotations();
         int currTestIdx = 1;
+        boolean status = false;
+
         for (Method method : testMethods) {
             try {
-                System.out.println("=========== Start test " +
-                        currTestIdx + "/" + testMethods.size() +
-                        " [" + method.getName() + "] ============ ");
                 method.invoke(instance);
-                ++successCount;
+                status = true;
             } catch (Exception e) {
-                System.out.println("Test error: " + e.getLocalizedMessage());
-                ++errorCount;
+                e.getCause().printStackTrace();
+                status = false;
             }
 
+            results.add(new TestResult(method.getName(), currTestIdx, status));
             ++currTestIdx;
         }
 
-        System.out.println("=========== Run tests: " + testMethods.size() + "," +
-                " success: " + successCount + ", error: " + errorCount + " =========");
-
+        return results;
     }
 
     public void runAfterSuite() {

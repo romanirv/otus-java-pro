@@ -7,7 +7,6 @@ import ru.otus.reflection.testing.framework.api.Test;
 public class TestService {
 
     public TestService() {
-
     }
 
     @BeforeSuite
@@ -22,22 +21,22 @@ public class TestService {
 
     @Test(priority = 1)
     public void test1() {
-        System.out.println("test1");
+        System.out.println("test1() -> success");
     }
 
     public void test2() {
-        System.out.println("test2");
+        System.out.println("test2()");
     }
 
     @Test(priority = 9)
     public void test3() throws Exception {
-        System.out.println("test3");
-        throw new Exception("Exception");
+        System.out.println("test3() -> error");
+        throw new RuntimeException("Test error!");
     }
 
     @Test(priority = 0)
     public void test4() {
-        System.out.println("test4");
+        System.out.println("test4() -> success");
     }
 
 }

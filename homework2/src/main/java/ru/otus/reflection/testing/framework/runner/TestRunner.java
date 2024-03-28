@@ -1,9 +1,11 @@
 package ru.otus.reflection.testing.framework.runner;
 
 import ru.otus.reflection.testing.framework.core.TestCore;
+import ru.otus.reflection.testing.framework.entity.TestResult;
 import ru.otus.reflection.testing.framework.exception.TestException;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 public class TestRunner {
 
@@ -20,7 +22,23 @@ public class TestRunner {
 
         TestCore testCore = new TestCore(cls, instanceTestingObject(cls));
         testCore.runBeforeSuite();
-        testCore.runTests();
+
+        List<TestResult> results = testCore.runTests();
+        int successCount = 0;
+        int errorCount = 0;
+
+        for (TestResult result : results) {
+            System.out.println("===== Test [" + result.getName() + "] " + result.getOrder() + "/" + results.size() +
+                    (result.getStatus() ? " success =====" : " error   ====="));
+
+            if (result.getStatus()) {
+                ++successCount;
+            } else {
+                ++errorCount;
+            }
+        }
+        System.out.println("Tests: " + results.size() + " success: " + successCount + " error: " + errorCount);
+
         testCore.runAfterSuite();
     }
 
