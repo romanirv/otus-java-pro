@@ -1,5 +1,8 @@
 package ru.otus.reflection.testing.framework.runner;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ru.otus.reflection.testing.framework.core.TestCore;
 import ru.otus.reflection.testing.framework.core.TestUtils;
 import ru.otus.reflection.testing.framework.entity.TestResult;
@@ -10,6 +13,8 @@ import java.util.List;
 
 public class TestRunner {
 
+    private static final Logger logger = LoggerFactory.getLogger(TestRunner.class);
+
     public static void runAllTests(String testingClassName) throws IllegalArgumentException {
         try {
             runAllTests(Class.forName(testingClassName));
@@ -19,32 +24,15 @@ public class TestRunner {
     }
 
     public static void runAllTests(Class<?> cls) throws RuntimeException {
-        if (TestUtils.isTestClassDisabled(cls)) {
-            System.out.println("========= Tests for class " + "[" + cls + "] disabled! ===========");
+        if (checkIsTestCaseDisabled(cls)) {
             return;
         }
 
-        System.out.println("========= Run tests for class " + "[" + cls + "]" + " ===========");
-
+        logger.info("Run tests for class " + "[" + cls + "]");
         TestCore testCore = new TestCore(cls, instanceTestingObject(cls));
+
         testCore.runBeforeSuite();
-
-        List<TestResult> results = testCore.runTests();
-        int successCount = 0;
-        int errorCount = 0;
-
-        for (TestResult result : results) {
-            System.out.println("===== Test [" + result.getName() + "] " + result.getOrder() + "/" + results.size() +
-                    (result.getStatus() ? " success =====" : " error   ====="));
-
-            if (result.getStatus()) {
-                ++successCount;
-            } else {
-                ++errorCount;
-            }
-        }
-        System.out.println("Tests: " + results.size() + " success: " + successCount + " error: " + errorCount);
-
+        testResultsPrepare(testCore.runTests());
         testCore.runAfterSuite();
     }
 
@@ -55,5 +43,35 @@ public class TestRunner {
                 IllegalAccessException | InvocationTargetException e) {
             throw new TestException("Instance object of type " + cls + " error!");
         }
+    }
+
+    private static boolean checkIsTestCaseDisabled(Class<?> cls) {
+        if (TestUtils.isTestClassDisabled(cls)) {
+            logger.error("Tests for class " + "[" + cls + "] disabled!");
+            return true;
+        }
+
+        return false;
+    }
+
+    private static void testResultsPrepare(List<TestResult> results) {
+        int successCount = 0;
+        int errorCount = 0;
+
+        for (TestResult result : results) {
+            if (result.getStatus()) {
+                logger.info("Test [" + result.getName() + "] " + result.getOrder() + "/" + results.size() + " success");
+            } else {
+                logger.error("Test [" + result.getName() + "] " + result.getOrder() + "/" + results.size() + " error");
+            }
+
+            if (result.getStatus()) {
+                ++successCount;
+            } else {
+                ++errorCount;
+            }
+        }
+        logger.info("Tests: " + results.size() + " success: " + successCount + " error: " + errorCount);
+
     }
 }

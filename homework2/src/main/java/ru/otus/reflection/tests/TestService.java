@@ -1,54 +1,57 @@
 package ru.otus.reflection.tests;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.otus.reflection.testing.framework.api.*;
 
 public class TestService {
 
+    private static final Logger logger = LoggerFactory.getLogger(TestService.class);
     @BeforeSuite
     public void beforeSuite() {
-        System.out.println("beforeSuite()");
+        logger.debug("beforeSuite()");
     }
 
     @AfterSuite
     public void afterSuite() {
-        System.out.println("afterSuite()");
+        logger.debug("afterSuite()");
     }
 
     @Before
     public void before() {
-        System.out.println("before()");
+        logger.debug("before()");
     }
 
     @After
     public void after() {
-        System.out.println("after()");
+        logger.debug("after()");
     }
 
     @Test(priority = 1)
     public void test1() {
-        System.out.println("test1() -> success");
+        logger.debug("test1() -> success");
     }
 
     public void test2() {
-        System.out.println("test2() -> ");
+        logger.debug("test2() -> ");
     }
 
     @Test(priority = 9)
     public void test3() throws RuntimeException {
-        System.out.println("test3() -> error");
+        logger.debug("test3() -> error");
         throw new RuntimeException("Test error!");
     }
 
     @Test(priority = 0)
     @ThrowsException(exception = RuntimeException.class)
     public void test4() {
-        System.out.println("test4() -> error");
+        logger.debug("test4() -> error");
         throw new RuntimeException("Runtime exception");
     }
 
     @Test(priority = 10)
     @Disabled
     public void test5() {
-        System.out.println("test5() -> disabled");
+        logger.debug("test5() -> disabled");
     }
 }

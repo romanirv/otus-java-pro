@@ -12,9 +12,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class TestCore {
-
-    private Class<?> cls;
-    private Object instance;
+    private final Class<?> cls;
+    private final Object instance;
 
     public TestCore(Class<?> cls, Object instance) {
         this.cls = cls;
@@ -41,43 +40,18 @@ public class TestCore {
         List<Method> afterTestsMethods = TestUtils.getAfterMethods(cls);
 
         int currTestIdx = 1;
-        boolean status = false;
 
         for (Method method : testMethods) {
             if (TestUtils.isTestClassDisabled(method)) {
                 continue;
             }
 
-            for (Method beforeMethod : beforeTestsMethods) {
-                try {
-                    beforeMethod.invoke(instance);
-                } catch (InvocationTargetException | IllegalAccessException e) {
-                    e.getCause().printStackTrace();
-                }
-            }
+            runBeforeTestsMethods(beforeTestsMethods);
 
-            boolean requiredCatchException = TestUtils.isTestRequiredException(method);
-
-            try {
-                method.invoke(instance);
-                status = !requiredCatchException;
-            } catch (Exception e) {
-                status = requiredCatchException && TestUtils.isInTestExpectedException(method, e.getCause().getClass());
-                if (!status) {
-                    e.getCause().printStackTrace();
-                }
-            }
-
-            results.add(new TestResult(method.getName(), currTestIdx, status));
+            results.add(new TestResult(method.getName(), currTestIdx, runTestMethod(method)));
             ++currTestIdx;
 
-            for (Method afterMethod : afterTestsMethods) {
-                try {
-                    afterMethod.invoke(instance);
-                } catch (InvocationTargetException | IllegalAccessException e) {
-                    e.getCause().printStackTrace();
-                }
-            }
+            runAfterTestsMethods(afterTestsMethods);
         }
 
         return results;
@@ -91,6 +65,42 @@ public class TestCore {
             } catch (InvocationTargetException | IllegalAccessException e) {
                 throw new TestException("Invoke AfterSuite method '" +
                         afterSuiteMethod.get().getName() + "'error!");
+            }
+        }
+    }
+
+    private void runBeforeTestsMethods(List<Method> beforeTestsMethods) {
+        for (Method beforeMethod : beforeTestsMethods) {
+            try {
+                beforeMethod.invoke(instance);
+            } catch (InvocationTargetException | IllegalAccessException e) {
+                e.getCause().printStackTrace();
+            }
+        }
+    }
+
+    private boolean runTestMethod(Method method) {
+        boolean requiredCatchException = TestUtils.isTestRequiredException(method);
+        boolean status = false;
+        try {
+            method.invoke(instance);
+            status = !requiredCatchException;
+        } catch (Exception e) {
+            status = requiredCatchException && TestUtils.isInTestExpectedException(method, e.getCause().getClass());
+            if (!status) {
+                e.getCause().printStackTrace();
+            }
+        }
+
+        return status;
+    }
+
+    private void runAfterTestsMethods(List<Method> afterTestsMethods) {
+        for (Method afterMethod : afterTestsMethods) {
+            try {
+                afterMethod.invoke(instance);
+            } catch (InvocationTargetException | IllegalAccessException e) {
+                e.getCause().printStackTrace();
             }
         }
     }
