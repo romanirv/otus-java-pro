@@ -1,4 +1,5 @@
 rootProject.name = 'otus-java-pro'
 include 'homework1'
 include 'homework2'
+include 'homework3'
 
