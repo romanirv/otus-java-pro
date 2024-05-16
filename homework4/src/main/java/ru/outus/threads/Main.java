@@ -17,22 +17,24 @@ public class Main {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    Thread.currentThread().interrupt();
                 }
             });
         }
 
         try {
             Thread.sleep(5000);
-        } catch (InterruptedException ignored) {
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Thread.currentThread().interrupt();
         }
 
         try {
             logger.info("Try shutdown");
             threadPool.shutdown();
 
-            threadPool.execute(() -> {
-                logger.info("After shutdown task");
-            });
+            threadPool.execute(() -> logger.info("After shutdown task"));
             logger.info("exit");
         } catch (IllegalStateException e) {
             e.printStackTrace();

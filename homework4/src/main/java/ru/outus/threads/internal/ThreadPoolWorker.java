@@ -60,6 +60,7 @@ public class ThreadPoolWorker extends Thread {
             return true;
         } catch (InterruptedException | BrokenBarrierException e) {
             logger.error("Wait start all workers exception: " + e.getLocalizedMessage());
+            Thread.currentThread().interrupt();
         }
         return false;
     }

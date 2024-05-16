@@ -64,6 +64,7 @@ public class ThreadPool {
             logger.info("Shutdown: thread pool complete!");
         } catch (InterruptedException ignored) {
             logger.error("Interrupted workers complete wait!");
+            Thread.currentThread().interrupt();
         }
     }
 }
