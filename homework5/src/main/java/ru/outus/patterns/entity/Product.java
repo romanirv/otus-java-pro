@@ -23,6 +23,38 @@ public final class Product {
         return new ProductBuilder();
     }
 
+    public Long id() {
+        return this.id;
+    }
+
+    public String title() {
+        return this.title;
+    }
+
+    public String description() {
+        return this.description;
+    }
+
+    public BigDecimal cost() {
+        return this.cost;
+    }
+
+    public Long weight() {
+        return this.weight;
+    }
+
+    public Long width() {
+        return this.width;
+    }
+
+    public Long length() {
+        return this.length;
+    }
+
+    public Long height() {
+        return this.height;
+    }
+
     @Override
     public String toString() {
         return "Product [id: " + id  + ", " +

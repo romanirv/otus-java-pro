@@ -24,7 +24,16 @@ public class Main {
                 .length(10000L)
                 .height(200L)
                 .build();
-        logger.info(product.toString());
+
+        logger.info("Product [id: " + product.id()  + ", " +
+                "title: " + product.title() + ", " +
+                "description: " + product.description() + ", " +
+                "cost: " + product.cost() + ", " +
+                "weight: " + product.weight() + ", " +
+                "width: " + product.width() + ", " +
+                "length: " + product.length() + ", " +
+                "height: " + product.height() + "]");
+
 
         Box box = new Box(
                 Arrays.asList("a", "b"),
