@@ -2,8 +2,10 @@ package ru.outus.patterns.services;
 
 import ru.outus.patterns.dao.Dao;
 import ru.outus.patterns.entity.Account;
+import ru.outus.patterns.services.exceptions.AccountException;
 
 import java.math.BigDecimal;
+import java.sql.SQLException;
 
 public class AccountService {
 
@@ -13,19 +15,35 @@ public class AccountService {
         this.accountDao = accountDao;
     }
 
-    public Account addAccount(String accountNumber, BigDecimal amount) {
+    public Account addAccount(String accountNumber, BigDecimal amount) throws AccountException {
         Account account = new Account();
         account.setNumber(accountNumber);
         account.setAmount(amount);
-        return accountDao.save(account);
+
+        try {
+            return accountDao.save(account);
+        } catch (SQLException e) {
+            throw new AccountException(e.getLocalizedMessage());
+        }
     }
 
-    public Account addAmount(Long accountId, BigDecimal sumValue) {
-        Account account = accountDao.get(accountId).orElseThrow();
+    public Account addAmount(Long accountId, BigDecimal sumValue) throws AccountException {
+        Account account = accountDao.get(accountId)
+                .orElseThrow(() -> new ArithmeticException(
+                        "Account by id: " + accountId + " not found!"));
+        try {
+            account.setAmount(account.getAmount().add(sumValue));
+            return accountDao.update(account);
+        } catch (SQLException e) {
+            throw new AccountException(e.getLocalizedMessage());
+        }
+    }
 
-        BigDecimal newAmount = account.getAmount().add(sumValue);
-        account.setAmount(newAmount);
-
-        return accountDao.update(account);
+    public void deleteAccount(Long accountId) throws AccountException {
+        try {
+            accountDao.delete(accountId);
+        } catch (SQLException e) {
+            throw new AccountException(e.getLocalizedMessage());
+        }
     }
 }
