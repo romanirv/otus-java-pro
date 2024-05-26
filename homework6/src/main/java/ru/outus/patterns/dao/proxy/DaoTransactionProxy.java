@@ -6,68 +6,65 @@ import ru.outus.patterns.dao.Dao;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Savepoint;
 import java.util.Optional;
 
-public class DaoTransactionProxy<Entity> implements Dao<Entity> {
+public class DaoTransactionProxy<T> implements Dao<T> {
     private static final Logger logger = LoggerFactory.getLogger(DaoTransactionProxy.class);
 
-    private final Dao<Entity> realObject;
+    private final Dao<T> realObject;
     private final Connection dbConnection;
 
-    public DaoTransactionProxy(Dao<Entity> realObject, Connection dbConnections) {
+    public DaoTransactionProxy(Dao<T> realObject, Connection dbConnections) {
         this.realObject = realObject;
         this.dbConnection = dbConnections;
     }
 
     @Override
-    public Optional<Entity> get(Long id) {
+    public Optional<T> get(Long id) {
         return this.realObject.get(id);
     }
 
     @Override
-    public Entity save(Entity entity) throws SQLException {
-        Savepoint savePoint = createTransaction();
+    public T save(T entity) throws SQLException {
+        createTransaction();
         try {
-            Entity result = this.realObject.save(entity);
+            T result = this.realObject.save(entity);
             commitTransaction();
             return result;
         } catch (SQLException e) {
-            rollbackTransaction(savePoint);
+            rollbackTransaction();
             throw e;
         }
     }
 
     @Override
-    public Entity update(Entity entity) throws SQLException {
-        Savepoint savePoint = createTransaction();
+    public T update(T entity) throws SQLException {
+        createTransaction();
         try {
-            Entity result = this.realObject.update(entity);
+            T result = this.realObject.update(entity);
             commitTransaction();
             return result;
         } catch (SQLException e) {
-            rollbackTransaction(savePoint);
+            rollbackTransaction();
             throw e;
         }
     }
 
     @Override
     public void delete(Long entity) throws SQLException {
-        Savepoint savePoint = createTransaction();
+        createTransaction();
         try {
             realObject.delete(entity);
             commitTransaction();
         } catch (SQLException e){
-            rollbackTransaction(savePoint);
+            rollbackTransaction();
             throw e;
         }
     }
 
-    private Savepoint createTransaction() throws SQLException {
+    private void createTransaction() throws SQLException {
         dbConnection.setAutoCommit(false);
-        Savepoint result = dbConnection.setSavepoint();
         logger.info("Create transaction");
-        return result;
     }
 
     private void commitTransaction() throws SQLException {
@@ -75,8 +72,8 @@ public class DaoTransactionProxy<Entity> implements Dao<Entity> {
         logger.info("Commit transaction");
     }
 
-    private void rollbackTransaction(Savepoint savepoint) throws SQLException {
-        this.dbConnection.rollback(savepoint);
+    private void rollbackTransaction() throws SQLException {
+        this.dbConnection.rollback();
         logger.info("Rollback transaction");
     }
 }

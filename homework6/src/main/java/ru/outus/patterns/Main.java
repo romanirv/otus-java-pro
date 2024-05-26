@@ -64,6 +64,7 @@ public class Main {
                     " initialAmount=" + account.getAmount() + " success!");
 
             Account newAccount = accountService.addAmount(account.getId(), new BigDecimal("10.0"));
+//            newAccount = accountService.addAmount(account.getId(), new BigDecimal("20.0"));
             logger.info("Update for account id=" + newAccount.getId() + " amount=" + newAccount.getAmount() + " success!");
 
             accountService.deleteAccount(newAccount.getId());

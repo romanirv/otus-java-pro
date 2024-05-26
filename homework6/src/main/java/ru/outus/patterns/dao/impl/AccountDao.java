@@ -6,25 +6,38 @@ import ru.outus.patterns.dao.Dao;
 import ru.outus.patterns.entity.Account;
 
 import java.math.BigDecimal;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Optional;
 
 public class AccountDao implements Dao<Account> {
     private static final Logger logger = LoggerFactory.getLogger(AccountDao.class);
 
     private final Connection dbConnection;
+    private final PreparedStatement getGetQueryPreparedStmt;
+    private final PreparedStatement insertQueryPreparedStmt;
+    private final PreparedStatement updateQueryPreparedStmt;
+    private final PreparedStatement deleteQueryPreparedStmt;
+
 
     public AccountDao(Connection dbConnection) throws SQLException {
         this.dbConnection = dbConnection;
-        createTable();
+        this.createTable();
+        this.getGetQueryPreparedStmt = this.dbConnection.prepareStatement(SQLAccount.GET.query);
+        this.insertQueryPreparedStmt = this.dbConnection.prepareStatement(SQLAccount.INSERT.query, new String[] { "id" });
+        this.updateQueryPreparedStmt = this.dbConnection.prepareStatement(SQLAccount.UPDATE.query);
+        this.deleteQueryPreparedStmt = this.dbConnection.prepareStatement(SQLAccount.DELETE.query);
     }
 
     @Override
     public Optional<Account> get(Long id) {
-        try (PreparedStatement statement = this.dbConnection.prepareStatement(SQLAccount.GET.query)) {
-            statement.setLong(1, id);
-            logger.info("Execute SQL=" + statement);
-            final ResultSet rs = statement.executeQuery();
+        try {
+            getGetQueryPreparedStmt.setLong(1, id);
+            logger.info("Execute SQL={}", getGetQueryPreparedStmt);
+            final ResultSet rs = getGetQueryPreparedStmt.executeQuery();
             if (rs.next()) {
                 final Account result = new Account();
                 result.setId(Long.parseLong(rs.getString("id")));
@@ -33,23 +46,20 @@ public class AccountDao implements Dao<Account> {
                 return Optional.of(result);
             }
         } catch (SQLException e) {
-            logger.error("Get account by id=" + id + " exception: " + e.getLocalizedMessage());
+            logger.error("Get account by id={} exception: {}", id, e.getLocalizedMessage());
         }
         return Optional.empty();
     }
 
     @Override
     public Account save(Account account) throws SQLException {
-        String[] returnId = { "id" };
-        try (PreparedStatement statement = this.dbConnection.prepareStatement(SQLAccount.INSERT.query, returnId)) {
-            statement.setString(1, account.getAmount().toString());
-            statement.setString(2, account.getNumber());
-            logger.info("Execute SQL=" + statement);
-            int index = statement.executeUpdate();
-            try (ResultSet rs = statement.getGeneratedKeys()) {
-                if (rs.next()) {
-                    account.setId(rs.getLong(index));
-                }
+        insertQueryPreparedStmt.setString(1, account.getAmount().toString());
+        insertQueryPreparedStmt.setString(2, account.getNumber());
+        logger.info("Execute SQL={}", insertQueryPreparedStmt);
+        int index = insertQueryPreparedStmt.executeUpdate();
+        try (ResultSet rs = insertQueryPreparedStmt.getGeneratedKeys()) {
+            if (rs.next()) {
+                account.setId(rs.getLong(index));
             }
         }
         return account;
@@ -57,30 +67,25 @@ public class AccountDao implements Dao<Account> {
 
     @Override
     public Account update(Account account) throws SQLException {
-        try (PreparedStatement statement = this.dbConnection.prepareStatement(SQLAccount.UPDATE.query)) {
-            statement.setString(1, account.getAmount().toString());
-            statement.setString(2, account.getNumber());
-            statement.setLong(3, account.getId());
-            logger.info("Execute SQL=" + statement);
-            statement.executeUpdate();
-        }
+        updateQueryPreparedStmt.setString(1, account.getAmount().toString());
+        updateQueryPreparedStmt.setString(2, account.getNumber());
+        updateQueryPreparedStmt.setLong(3, account.getId());
+        logger.info("Execute SQL={}", updateQueryPreparedStmt);
+        updateQueryPreparedStmt.executeUpdate();
         return account;
-
     }
 
     @Override
     public void delete(Long id) throws SQLException {
-        try (PreparedStatement statement = this.dbConnection.prepareStatement(SQLAccount.DELETE.query)) {
-            statement.setLong(1, id);
-            statement.executeUpdate();
-            logger.info("Execute SQL=" + statement);
-            logger.info("Delete account id=" + id);
-        }
+        deleteQueryPreparedStmt.setLong(1, id);
+        deleteQueryPreparedStmt.executeUpdate();
+        logger.info("Execute SQL={}", deleteQueryPreparedStmt);
+        logger.info("Delete account id={}", id);
     }
 
     private void createTable() throws SQLException {
-        Statement stmt = this.dbConnection.createStatement();
-        stmt.execute(SQLAccount.CREATE.query);
+        Statement createQueryStatement = this.dbConnection.createStatement();
+        createQueryStatement.execute(SQLAccount.CREATE.query);
     }
 
     enum SQLAccount {
