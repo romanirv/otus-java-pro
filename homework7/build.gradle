@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+}
+
+group = 'ru.otus.db'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
+    implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
+    implementation group: 'com.h2database', name: 'h2', version: '2.2.224'
+    implementation group: 'com.zaxxer', name: 'HikariCP', version: '5.1.0'
+}
