@@ -4,26 +4,16 @@ import ru.outus.db.annotations.MyField;
 import ru.outus.db.annotations.MyPrimaryKeyField;
 import ru.outus.db.annotations.MyTable;
 
-import java.math.BigDecimal;
-
 @MyTable(title = "product")
 public class Product {
     @MyField
     @MyPrimaryKeyField
     private Long id;
-    @MyField(name = "title")
     private String title;
-    @MyField(name = "price")
-    private BigDecimal price;
+    @MyField(name = "my_price")
+    private String price;
 
     public Product() {
-
-    }
-
-    public Product(Long id, String title, BigDecimal price) {
-        this.id = id;
-        this.title = title;
-        this.price = price;
     }
 
     public Long getId() {
@@ -42,11 +32,11 @@ public class Product {
         this.title = title;
     }
 
-    public BigDecimal getPrice() {
+    public String getPrice() {
         return price;
     }
 
-    public void setPrice(BigDecimal price) {
+    public void setPrice(String price) {
         this.price = price;
     }
 

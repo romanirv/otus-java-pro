@@ -1,4 +1,4 @@
-package ru.outus.db.migrations;
+package ru.outus.db.data.migrations;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,8 +7,8 @@ import ru.outus.db.annotations.MyField;
 import ru.outus.db.annotations.MyPrimaryKeyField;
 import ru.outus.db.annotations.MyTable;
 import ru.outus.db.data.DataSource;
+import ru.outus.db.data.exception.DbError;
 
-import java.beans.PropertyDescriptor;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -18,14 +18,19 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
+
 
 public class DbMigrator {
     private static final Logger logger = LoggerFactory.getLogger(Migrations.class);
 
     private static final Map<String, String> dbTypesMapTable = new HashMap<>() {{
             put(String.class.toString(), "varchar(450)");
-            put(Long.class.toString(), "bigint");
+            put(Long.class.toString(), "serial");
             put(BigDecimal.class.toString(), "decimal");
     }};
 
@@ -33,21 +38,30 @@ public class DbMigrator {
         return DbMigrator.writeScript(scriptFilename, getDbInitScript(entityClasses));
     }
 
-    public static boolean initializeDb(String initScriptFilename, DataSource dataSource) throws SQLException {
+    public static void initializeDb(String initScriptFilename, DataSource dataSource) throws DbError {
         List<String> queries = DbMigrator.readScript(initScriptFilename);
-        Connection connection = dataSource.getConnection();
 
+        Connection connection = null;
         try {
+            connection = dataSource.getConnection();
+
             Statement statement = connection.createStatement();
             connection.setAutoCommit(false);
+
             for (String query : queries) {
                 statement.execute(query);
             }
+
             connection.commit();
-            return true;
         } catch (SQLException e) {
-            connection.rollback();
-            return false;
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (SQLException ex) {
+                    throw new DbError(ex.getLocalizedMessage());
+                }
+            }
+            throw new DbError(e.getLocalizedMessage());
         }
     }
 
@@ -60,31 +74,24 @@ public class DbMigrator {
             List<Field> fields = Arrays.stream(cls.getDeclaredFields())
                     .filter(f -> f.isAnnotationPresent(MyField.class))
                     .toList();
-            for (Field f : fields) { // TODO Сделать использование геттеров
+            for (Field f : fields) {
                 f.setAccessible(true);
-                query.append(f.getName()).append(" ");
+                String name = f.getAnnotation(MyField.class).name();
+                if (name.isEmpty()) {
+                    name = f.getName();
+                }
+                query.append(name).append(" ");
                 if (!dbTypesMapTable.containsKey(f.getType().toString())) {
                     throw new RuntimeException("Convert filed to db type error!");
                 }
-
                 query.append(dbTypesMapTable.get(f.getType().toString()));
-                query.append(" NOT NULL, ");
+                if (f.isAnnotationPresent(MyPrimaryKeyField.class)) {
+                    query.append(" ");
+                    query.append("not null primary key");
+                }
+                query.append(", ");
             }
-
-            List<Field> primaryKeysFiled = fields.stream()
-                    .filter(f -> f.isAnnotationPresent(MyPrimaryKeyField.class))
-                    .toList();
-            if (primaryKeysFiled.size() > 1) {
-                throw new RuntimeException("Multiple primary key fields found!");
-            }
-
-            if (primaryKeysFiled.size() == 1) {
-                Field primaryKeyFiled = primaryKeysFiled.get(0);
-                primaryKeyFiled.setAccessible(true);
-                query.append("PRIMARY KEY (").append(primaryKeyFiled.getName()).append(")");
-            } else {
-                query.setLength(query.length() - 2);
-            }
+            query.setLength(query.length() - 2);
             query.append(");\n");
         }
 

@@ -1,18 +1,20 @@
 package ru.outus.db.data;
 
+import ru.outus.db.data.exception.DbError;
+
 import java.util.List;
 import java.util.Optional;
 
 public interface AbstractRepository<T> {
-    T create(T entity);
+    T create(T entity) throws DbError;
 
-    boolean update(T entity);
+    void update(T entity) throws DbError;
 
-    boolean deleteById(Long id);
+    void deleteById(Long id) throws DbError;
 
-    Optional<T> findById(Long id);
+    Optional<T> findById(Long id) throws DbError;
 
-    List<T> findAll();
+    List<T> findAll() throws DbError;
 
-    boolean deleteAll();
+    void deleteAll() throws DbError;
 }

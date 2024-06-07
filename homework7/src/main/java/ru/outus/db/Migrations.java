@@ -3,7 +3,7 @@ package ru.outus.db;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.outus.db.entiry.Product;
-import ru.outus.db.migrations.DbMigrator;
+import ru.outus.db.data.migrations.DbMigrator;
 
 import java.util.List;
 
