@@ -2,7 +2,6 @@ package ru.outus.db.data.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.outus.db.Migrations;
 import ru.outus.db.annotations.MyField;
 import ru.outus.db.annotations.MyPrimaryKeyField;
 import ru.outus.db.annotations.MyTable;
@@ -23,7 +22,7 @@ import java.util.Optional;
 
 
 public class AbstractRepositoryImpl<T> implements AbstractRepository<T> {
-    private static final Logger logger = LoggerFactory.getLogger(AbstractRepository.class);
+    private static final Logger logger = LoggerFactory.getLogger(AbstractRepositoryImpl.class);
 
     private final Class<T> cls;
     private final List<Field> fieldsWithoutPrimaryKeys;
@@ -69,7 +68,7 @@ public class AbstractRepositoryImpl<T> implements AbstractRepository<T> {
                 ++i;
             }
 
-            logger.info("Execute query: {}", insertPreparedStatement.toString());
+            logger.info("Execute query: {}", insertPreparedStatement);
             int index = insertPreparedStatement.executeUpdate();
             try (ResultSet rs = insertPreparedStatement.getGeneratedKeys()) {
                 if (rs.next()) {

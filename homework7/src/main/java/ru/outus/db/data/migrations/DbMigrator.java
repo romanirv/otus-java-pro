@@ -26,13 +26,15 @@ import java.util.ArrayList;
 
 
 public class DbMigrator {
-    private static final Logger logger = LoggerFactory.getLogger(Migrations.class);
+    private static final Logger logger = LoggerFactory.getLogger(DbMigrator.class);
+    private static final Map<String, String> dbTypesMapTable = new HashMap<>();
 
-    private static final Map<String, String> dbTypesMapTable = new HashMap<>() {{
-            put(String.class.toString(), "varchar(450)");
-            put(Long.class.toString(), "serial");
-            put(BigDecimal.class.toString(), "decimal");
-    }};
+    static {
+        dbTypesMapTable.put(String.class.toString(), "varchar(450)");
+        dbTypesMapTable.put(Long.class.toString(), "serial");
+        dbTypesMapTable.put(BigDecimal.class.toString(), "decimal");
+    }
+
 
     public static boolean generateDbInitScript(String scriptFilename, List<Class<?>> entityClasses) {
         return DbMigrator.writeScript(scriptFilename, getDbInitScript(entityClasses));
@@ -44,15 +46,16 @@ public class DbMigrator {
         Connection connection = null;
         try {
             connection = dataSource.getConnection();
+            try (Statement statement = connection.createStatement()) {
+                connection.setAutoCommit(false);
 
-            Statement statement = connection.createStatement();
-            connection.setAutoCommit(false);
+                for (String query : queries) {
+                    statement.addBatch(query);
+                }
+                statement.executeBatch();
 
-            for (String query : queries) {
-                statement.execute(query);
+                connection.commit();
             }
-
-            connection.commit();
         } catch (SQLException e) {
             if (connection != null) {
                 try {
@@ -96,6 +99,10 @@ public class DbMigrator {
         }
 
         return query.toString();
+    }
+
+    private DbMigrator() {
+
     }
 
     private static boolean writeScript(String scriptFilename, String script) {
