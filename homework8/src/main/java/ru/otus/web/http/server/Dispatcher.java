@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Dispatcher {
+    private String staticResourcesPath;
     private Map<String, RequestProcessor> router;
     private RequestProcessor unknownOperationRequestProcessor;
     private RequestProcessor optionsRequestProcessor;
@@ -26,7 +27,8 @@ public class Dispatcher {
 
     private static final Logger logger = LoggerFactory.getLogger(Dispatcher.class.getName());
 
-    public Dispatcher() {
+    public Dispatcher(String staticResourcesPath) {
+        this.staticResourcesPath = staticResourcesPath;
         this.router = new HashMap<>();
         this.router.put("GET /calc", new CalculatorRequestProcessor());
         this.router.put("GET /hello", new HelloWorldRequestProcessor());
@@ -45,7 +47,7 @@ public class Dispatcher {
             optionsRequestProcessor.execute(httpRequest, outputStream);
             return;
         }
-        if (Files.exists(Paths.get("static/", httpRequest.getUri().substring(1)))) {
+        if (Files.exists(Paths.get(this.staticResourcesPath, httpRequest.getUri().substring(1)))) {
             staticResourcesProcessor.execute(httpRequest, outputStream);
             return;
         }

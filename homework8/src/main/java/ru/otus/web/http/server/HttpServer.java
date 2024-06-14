@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 
 public class HttpServer {
     private int port;
+    private String staticResourcePath;
     private Dispatcher dispatcher;
     private ExecutorService executorService;
     private ThreadLocal<byte[]> requestBuffer;
@@ -20,8 +21,9 @@ public class HttpServer {
 
     private static final int DEFAULT_BUFFER_SIZE = 8192;
 
-    public HttpServer(int port) {
+    public HttpServer(int port, String staticResourcePath) {
         this.port = port;
+        this.staticResourcePath = staticResourcePath;
     }
 
     public void start() {
@@ -29,7 +31,7 @@ public class HttpServer {
         requestBuffer = new ThreadLocal<>();
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             logger.info("Сервер запущен на порту: {}", port);
-            this.dispatcher = new Dispatcher();
+            this.dispatcher = new Dispatcher(this.staticResourcePath);
             Storage.init();
             while (true) {
                 Socket socket = serverSocket.accept();
