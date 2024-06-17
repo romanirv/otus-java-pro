@@ -7,6 +7,7 @@ import ru.otus.web.http.server.protocol.http.HttpStatus;
 import ru.otus.web.http.server.application.Item;
 import ru.otus.web.http.server.application.Storage;
 import ru.otus.web.http.server.processors.RequestProcessor;
+import ru.otus.web.http.server.protocol.http.utils.HttpRequestUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,21 +17,20 @@ import java.util.List;
 public class GetAllProductsProcessor implements RequestProcessor {
     @Override
     public void execute(HttpRequest httpRequest, OutputStream output) throws IOException {
-        List<Item> items = Storage.getItems();
-        Gson gson = new Gson();
-//        String result = "HTTP/1.1 200 OK\r\n" +
-//                "Content-Type: application/json\r\n" +
-//                "Connection: keep-alive\r\n" +
-//                "Access-Control-Allow-Origin: *\r\n\r\n" + gson.toJson(items);
-
-        HttpResponse httpResponse = new HttpResponse();
-        httpResponse.setStatusCode(HttpStatus.OK);
-        httpResponse.setHeader("Content-Type", "application/json");
-        httpResponse.setHeader("Connection", "keep-alive");
-        httpResponse.setHeader("Access-Control-Allow-Origin", "*");
-        httpResponse.setBody(gson.toJson(items));
-
-        output.write(httpResponse.toRawResponse().getBytes(StandardCharsets.UTF_8));
+        HttpResponse response = new HttpResponse();
+        String responseContentType = "application/json";
+        if (HttpRequestUtils.checkRequestAccept(httpRequest, responseContentType)) {
+            List<Item> items = Storage.getItems();
+            Gson gson = new Gson();
+            response.setStatusCode(HttpStatus.OK);
+            response.setHeader("Content-Type", responseContentType);
+            response.setHeader("Connection", "keep-alive");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setBody(gson.toJson(items));
+        } else {
+            response.setStatusCode(HttpStatus.NOT_ACCEPTABLE);
+        }
+        output.write(response.toRawResponse().getBytes(StandardCharsets.UTF_8));
         output.flush();
     }
 }
