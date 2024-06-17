@@ -3,10 +3,16 @@ package ru.otus.web.http.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.otus.web.http.server.application.Storage;
+import ru.otus.web.http.server.protocol.http.HttpError;
+import ru.otus.web.http.server.protocol.http.HttpRequest;
+import ru.otus.web.http.server.protocol.http.HttpResponse;
+import ru.otus.web.http.server.protocol.http.HttpStatus;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -53,8 +59,14 @@ public class HttpServer {
             int n = socket.getInputStream().read(buffer);
             if (n > 0) {
                 String rawRequest = new String(buffer, 0, n);
-                HttpRequest request = new HttpRequest(rawRequest);
-                dispatcher.execute(request, socket.getOutputStream());
+                Optional<HttpRequest> request = parseRequest(rawRequest);
+                if (request.isEmpty()) {
+                    HttpResponse httpResponse = new HttpResponse();
+                    httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
+                    socket.getOutputStream().write(httpResponse.toRawResponse().getBytes(StandardCharsets.UTF_8));
+                } else {
+                    dispatcher.execute(request.get(), socket.getOutputStream());
+                }
                 socket.getOutputStream().flush();
             }
         } catch (Exception e) {
@@ -68,5 +80,14 @@ public class HttpServer {
                 e.printStackTrace();
             }
         }
+    }
+
+    private Optional<HttpRequest> parseRequest(String request) {
+        try {
+            return Optional.of(new HttpRequest(request));
+        } catch (HttpError e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
     }
 }

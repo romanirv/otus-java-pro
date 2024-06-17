@@ -10,6 +10,8 @@ import ru.otus.web.http.server.application.processors.CalculatorRequestProcessor
 import ru.otus.web.http.server.application.processors.CreateNewProductProcessor;
 import ru.otus.web.http.server.application.processors.GetAllProductsProcessor;
 import ru.otus.web.http.server.application.processors.HelloWorldRequestProcessor;
+import ru.otus.web.http.server.protocol.http.HttpMethod;
+import ru.otus.web.http.server.protocol.http.HttpRequest;
 
 import java.io.IOException;
 import java.io.OutputStream;
