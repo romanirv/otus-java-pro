@@ -12,51 +12,62 @@ import ru.otus.web.http.server.application.processors.GetAllProductsProcessor;
 import ru.otus.web.http.server.application.processors.HelloWorldRequestProcessor;
 import ru.otus.web.http.server.protocol.http.HttpMethod;
 import ru.otus.web.http.server.protocol.http.HttpRequest;
+import ru.otus.web.http.server.protocol.http.HttpResponse;
+import ru.otus.web.http.server.protocol.http.HttpStatus;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class Dispatcher {
-    private String staticResourcesPath;
-    private Map<String, RequestProcessor> router;
-    private RequestProcessor unknownOperationRequestProcessor;
-    private RequestProcessor optionsRequestProcessor;
-    private RequestProcessor staticResourcesProcessor;
-
     private static final Logger logger = LoggerFactory.getLogger(Dispatcher.class.getName());
+
+    private final String staticResourcesPath;
+    private final Map<String, Map<HttpMethod, RequestProcessor>> router;
+    private final RequestProcessor unknownOperationRequestProcessor;
+    private final RequestProcessor optionsRequestProcessor;
+    private final RequestProcessor staticResourcesProcessor;
 
     public Dispatcher(String staticResourcesPath) {
         this.staticResourcesPath = staticResourcesPath;
+
         this.router = new HashMap<>();
-        this.router.put("GET /calc", new CalculatorRequestProcessor());
-        this.router.put("GET /hello", new HelloWorldRequestProcessor());
-        this.router.put("GET /items", new GetAllProductsProcessor());
-        this.router.put("POST /items", new CreateNewProductProcessor());
+        this.router.put("/calc",  Map.of(HttpMethod.GET, new CalculatorRequestProcessor()));
+        this.router.put("/hello", Map.of(HttpMethod.GET, new HelloWorldRequestProcessor()));
+        this.router.put("/items", Map.of(HttpMethod.GET, new GetAllProductsProcessor(),
+                                         HttpMethod.POST, new CreateNewProductProcessor()));
 
         this.unknownOperationRequestProcessor = new DefaultUnknownOperationProcessor();
         this.optionsRequestProcessor = new DefaultOptionsProcessor();
         this.staticResourcesProcessor = new DefaultStaticResourcesProcessor();
 
-        logger.info("Диспетчер проинициализирован");
+        logger.info("Dispatcher init success");
     }
 
-    public void execute(HttpRequest httpRequest, OutputStream outputStream) throws IOException {
-        if (httpRequest.getMethod() == HttpMethod.OPTIONS) {
-            optionsRequestProcessor.execute(httpRequest, outputStream);
+    public void execute(String  sessionId, HttpRequest request, HttpResponse response) throws IOException {
+        if (request.getMethod() == HttpMethod.OPTIONS) {
+            optionsRequestProcessor.execute(sessionId, request, response);
             return;
         }
-        if (Files.exists(Paths.get(this.staticResourcesPath, httpRequest.getUri().substring(1)))) {
-            staticResourcesProcessor.execute(httpRequest, outputStream);
+        if (Files.exists(Paths.get(this.staticResourcesPath, request.getUri().substring(1)))) {
+            staticResourcesProcessor.execute(sessionId, request, response);
             return;
         }
-        if (!router.containsKey(httpRequest.getRouteKey())) {
-            unknownOperationRequestProcessor.execute(httpRequest, outputStream);
-            return;
+
+        if (router.containsKey(request.getUri())) {
+            Map<HttpMethod, RequestProcessor> handlers = router.get(request.getUri());
+            if (handlers.containsKey(request.getMethod())) {
+                RequestProcessor requestProcessor = handlers.get(request.getMethod());
+                requestProcessor.execute(sessionId, request, response);
+            } else {
+                logger.debug("HTTP method {} not allowed:", request.getMethod());
+                response.setStatusCode(HttpStatus.METHOD_NOT_ALLOWED);
+            }
+        } else {
+            unknownOperationRequestProcessor.execute(sessionId, request, response);
         }
-        router.get(httpRequest.getRouteKey()).execute(httpRequest, outputStream);
     }
 }

@@ -1,10 +1,11 @@
 package ru.otus.web.http.server.processors;
 
 import ru.otus.web.http.server.protocol.http.HttpRequest;
+import ru.otus.web.http.server.protocol.http.HttpResponse;
 
 import java.io.IOException;
-import java.io.OutputStream;
+
 
 public interface RequestProcessor {
-    void execute(HttpRequest httpRequest, OutputStream output) throws IOException;
+    void execute(String sessionId, HttpRequest httpRequest, HttpResponse httpResponse) throws IOException;
 }

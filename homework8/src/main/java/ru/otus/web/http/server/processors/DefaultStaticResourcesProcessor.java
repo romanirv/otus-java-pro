@@ -1,21 +1,24 @@
 package ru.otus.web.http.server.processors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.otus.web.http.server.protocol.http.HttpRequest;
 import ru.otus.web.http.server.protocol.http.HttpResponse;
 import ru.otus.web.http.server.protocol.http.HttpStatus;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class DefaultStaticResourcesProcessor implements RequestProcessor {
+    private static final Logger logger = LoggerFactory.getLogger(DefaultStaticResourcesProcessor.class.getName());
+
     @Override
-    public void execute(HttpRequest httpRequest, OutputStream output) throws IOException {
-        HttpResponse response = new HttpResponse();
-        String filename = httpRequest.getUri().substring(1);
+    public void execute(String sessionId, HttpRequest request, HttpResponse response) throws IOException {
+        logger.info("{} - Execute DefaultStaticResourcesProcessor", sessionId);
+
+        String filename = request.getUri().substring(1);
         Path filePath = Paths.get("static/", filename);
         String fileType = filename.substring(filename.lastIndexOf(".") + 1);
         byte[] fileData = Files.readAllBytes(filePath);
@@ -24,7 +27,6 @@ public class DefaultStaticResourcesProcessor implements RequestProcessor {
         if (fileType.equals("pdf")) {
             response.setHeader("Content-Disposition", "attachment; filename=" + filename);
         }
-        output.write(response.toRawResponse().getBytes(StandardCharsets.UTF_8));
-        output.write(fileData);
+        response.setBody(fileData);
     }
 }

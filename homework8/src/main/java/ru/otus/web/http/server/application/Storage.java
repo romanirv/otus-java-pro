@@ -1,5 +1,9 @@
 package ru.otus.web.http.server.application;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.otus.web.http.server.HttpServer;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -7,9 +11,11 @@ import java.util.UUID;
 
 public class Storage {
     private static List<Item> items;
+    private static final Logger logger = LoggerFactory.getLogger(Storage.class.getName());
+
 
     public static void init() {
-        System.out.println("Хранилище проинициализировано");
+        logger.info("Storage init success");
         items = new ArrayList<>();
 
         for (int i = 0; i < 3; i++) {

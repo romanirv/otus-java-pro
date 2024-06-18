@@ -6,20 +6,19 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class HttpRequest {
     private static final Logger logger = LoggerFactory.getLogger(HttpRequest.class.getName());
 
-    private final String rawRequest;
     private String uri;
     private HttpMethod method;
     private final Map<String, String> parameters = new HashMap<>();
     private final Map<String, String> headers = new HashMap<>();
+    private final Map<String, String> cookies = new HashMap<>();
     private String body;
 
     public HttpRequest(String rawRequest) throws HttpError {
-        this.rawRequest = rawRequest;
-
         List<String> lines = rawRequest.lines().toList();
         if (lines.isEmpty()) {
             throw new HttpError("HTTP request is empty");
@@ -37,16 +36,8 @@ public class HttpRequest {
             }
         }
 
-        logger.debug("\n{}", rawRequest);
-        logger.trace("{} {}\nParameters: {}\n Headers: {} Body: {}", method, uri, parameters, headers, body); // TODO правильно все поназывать
-    }
-
-    public String getRawRequest() {
-        return rawRequest;
-    }
-
-    public String getRouteKey() {
-        return String.format("%s %s", method, uri);
+        logger.debug("\n{}", rawRequest.strip());
+        logger.trace("HTTP Method: {} URI: {}\nParameters: {}\n Headers: {} Body: {}", method, uri, parameters, headers, body);
     }
 
     public String getUri() {
@@ -57,8 +48,18 @@ public class HttpRequest {
         return parameters.get(key);
     }
 
-    public String getHeader(String key) {
-        return headers.get(key);
+    public Optional<String> getHeader(String key) {
+        if (headers.containsKey(key)) {
+            return Optional.of(headers.get(key));
+        }
+        return Optional.empty();
+    }
+
+    public Optional<String> getCookie(String key) {
+        if (cookies.containsKey(key)) {
+            return Optional.of(cookies.get(key));
+        }
+        return Optional.empty();
     }
 
     public String getBody() {
@@ -86,6 +87,11 @@ public class HttpRequest {
             if (parts.length != 2) {
                 throw new HttpError("HTTP request error: parse header error!");
             }
+
+            if (parts[0].equals("Cookie")) {
+                cookies.put(parts[0], parts[1]);
+            }
+
             headers.put(parts[0], parts[1]);
         }
     }

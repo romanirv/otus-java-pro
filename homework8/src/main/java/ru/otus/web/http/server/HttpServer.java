@@ -11,16 +11,16 @@ import ru.otus.web.http.server.protocol.http.HttpStatus;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+
 public class HttpServer {
-    private int port;
-    private String staticResourcePath;
+    private final int port;
+    private final String staticResourcePath;
     private Dispatcher dispatcher;
-    private ExecutorService executorService;
     private ThreadLocal<byte[]> requestBuffer;
 
     private static final Logger logger = LoggerFactory.getLogger(HttpServer.class.getName());
@@ -33,10 +33,10 @@ public class HttpServer {
     }
 
     public void start() {
-        executorService = Executors.newFixedThreadPool(4);
+        ExecutorService executorService = Executors.newFixedThreadPool(4);
         requestBuffer = new ThreadLocal<>();
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            logger.info("Сервер запущен на порту: {}", port);
+            logger.info("Server listen port: {}", port);
             this.dispatcher = new Dispatcher(this.staticResourcePath);
             Storage.init();
             while (true) {
@@ -44,7 +44,7 @@ public class HttpServer {
                 executorService.execute(() -> executeRequest(socket));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error while starting server: {}", e.getLocalizedMessage());
         } finally {
             executorService.shutdown();
         }
@@ -52,22 +52,30 @@ public class HttpServer {
 
     private void executeRequest(Socket socket) {
         try {
+            logger.debug("New connection {}", socket.getRemoteSocketAddress());
+
             if (requestBuffer.get() == null) {
                 requestBuffer.set(new byte[DEFAULT_BUFFER_SIZE]);
             }
+
             byte[] buffer = requestBuffer.get();
             int n = socket.getInputStream().read(buffer);
             if (n > 0) {
-                String rawRequest = new String(buffer, 0, n);
-                Optional<HttpRequest> request = parseRequest(rawRequest);
+                HttpResponse response = new HttpResponse();
+                Optional<HttpRequest> request = parseRequest(new String(buffer, 0, n));
                 if (request.isEmpty()) {
-                    HttpResponse httpResponse = new HttpResponse();
-                    httpResponse.setStatusCode(HttpStatus.BAD_REQUEST);
-                    socket.getOutputStream().write(httpResponse.toRawResponse().getBytes(StandardCharsets.UTF_8));
+                    logger.info("Parse HTTP request failed. Received bad request.");
+                    response.setStatusCode(HttpStatus.BAD_REQUEST);
                 } else {
-                    dispatcher.execute(request.get(), socket.getOutputStream());
+                    Optional<String> sessionId = request.get().getCookie("SESSIONID");
+                    if (sessionId.isEmpty()) {
+                        sessionId = Optional.of(UUID.randomUUID().toString());
+                        logger.info("In Cookie SESSIONID not found. Set new SESSIONID: {}", sessionId.get());
+                        response.setHeader("Set-Cookie", "SESSIONID=" + sessionId.get());
+                    }
+                    dispatcher.execute(sessionId.get(), request.get(), response);
                 }
-                socket.getOutputStream().flush();
+                response.writeToStream(socket.getOutputStream());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -86,7 +94,7 @@ public class HttpServer {
         try {
             return Optional.of(new HttpRequest(request));
         } catch (HttpError e) {
-            e.printStackTrace();
+            logger.error("Error while parsing HTTP request: {}", e.getLocalizedMessage());
         }
         return Optional.empty();
     }
