@@ -22,7 +22,7 @@ public class GetAllProductsProcessor implements RequestProcessor {
 
     @Override
     public void execute(String sessionId, HttpRequest request, HttpResponse response) throws IOException {
-        logger.info("{} - Executing GetAllProductsProcessor", sessionId);
+        logger.info("{} - Executing request", sessionId);
 
         String responseContentType = "application/json";
         if (HttpRequestUtils.checkRequestAccept(request, responseContentType)) {

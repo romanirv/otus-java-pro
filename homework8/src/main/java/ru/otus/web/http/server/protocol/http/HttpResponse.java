@@ -16,12 +16,24 @@ public class HttpResponse {
         this.httpStatus = httpStatus;
     }
 
+    public HttpStatus getStatusCode() {
+        return httpStatus;
+    }
+
     public void setHeader(String name, String value) {
         this.headers.put(name, value);
     }
 
+    public Map<String, String> getHeaders() {
+        return headers;
+    }
+
     public void setBody(byte[] body) {
         this.body = body;
+    }
+
+    public byte[] getBody() {
+        return body;
     }
 
     public void writeToStream(OutputStream stream) throws IOException {

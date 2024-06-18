@@ -21,7 +21,7 @@ public class CreateNewProductProcessor implements RequestProcessor {
 
     @Override
     public void execute(String sessionId, HttpRequest request, HttpResponse response) throws IOException {
-        logger.info("{} - Execute create new product", sessionId);
+        logger.info("{} - Execute request", sessionId);
 
         String responseContentType = "application/json";
         if (HttpRequestUtils.checkRequestAccept(request, responseContentType)) {

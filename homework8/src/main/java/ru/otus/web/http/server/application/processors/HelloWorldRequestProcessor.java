@@ -17,7 +17,7 @@ public class HelloWorldRequestProcessor implements RequestProcessor {
 
     @Override
     public void execute(String sessionId, HttpRequest request, HttpResponse response) throws IOException {
-        logger.info("{} - Execute HelloWorldRequestProcessor", sessionId);
+        logger.info("{} - Execute request", sessionId);
 
         String responseContentType = "text/html";
         if (HttpRequestUtils.checkRequestAccept(request, responseContentType)) {

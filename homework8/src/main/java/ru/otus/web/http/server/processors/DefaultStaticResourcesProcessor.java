@@ -13,13 +13,18 @@ import java.nio.file.Paths;
 
 public class DefaultStaticResourcesProcessor implements RequestProcessor {
     private static final Logger logger = LoggerFactory.getLogger(DefaultStaticResourcesProcessor.class.getName());
+    private final String staticResourcesPath;
+
+    public DefaultStaticResourcesProcessor(String staticResourcesPath) {
+        this.staticResourcesPath = staticResourcesPath;
+    }
 
     @Override
     public void execute(String sessionId, HttpRequest request, HttpResponse response) throws IOException {
-        logger.info("{} - Execute DefaultStaticResourcesProcessor", sessionId);
+        logger.info("{} - Execute request", sessionId);
 
         String filename = request.getUri().substring(1);
-        Path filePath = Paths.get("static/", filename);
+        Path filePath = Paths.get(staticResourcesPath, filename);
         String fileType = filename.substring(filename.lastIndexOf(".") + 1);
         byte[] fileData = Files.readAllBytes(filePath);
         response.setStatusCode(HttpStatus.OK);

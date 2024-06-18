@@ -2,10 +2,7 @@ package ru.otus.web.http.server;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.otus.web.http.server.processors.DefaultOptionsProcessor;
-import ru.otus.web.http.server.processors.DefaultStaticResourcesProcessor;
-import ru.otus.web.http.server.processors.RequestProcessor;
-import ru.otus.web.http.server.processors.DefaultUnknownOperationProcessor;
+import ru.otus.web.http.server.processors.*;
 import ru.otus.web.http.server.application.processors.CalculatorRequestProcessor;
 import ru.otus.web.http.server.application.processors.CreateNewProductProcessor;
 import ru.otus.web.http.server.application.processors.GetAllProductsProcessor;
@@ -20,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 public class Dispatcher {
     private static final Logger logger = LoggerFactory.getLogger(Dispatcher.class.getName());
@@ -36,13 +32,14 @@ public class Dispatcher {
 
         this.router = new HashMap<>();
         this.router.put("/calc",  Map.of(HttpMethod.GET, new CalculatorRequestProcessor()));
-        this.router.put("/hello", Map.of(HttpMethod.GET, new HelloWorldRequestProcessor()));
+        this.router.put("/hello", Map.of(HttpMethod.GET, new CacheControlProcessor(new HelloWorldRequestProcessor(), 31536000)));
         this.router.put("/items", Map.of(HttpMethod.GET, new GetAllProductsProcessor(),
                                          HttpMethod.POST, new CreateNewProductProcessor()));
 
         this.unknownOperationRequestProcessor = new DefaultUnknownOperationProcessor();
         this.optionsRequestProcessor = new DefaultOptionsProcessor();
-        this.staticResourcesProcessor = new DefaultStaticResourcesProcessor();
+        this.staticResourcesProcessor = new CacheControlProcessor(new DefaultStaticResourcesProcessor(staticResourcesPath), 10);
+
 
         logger.info("Dispatcher init success");
     }
@@ -52,6 +49,7 @@ public class Dispatcher {
             optionsRequestProcessor.execute(sessionId, request, response);
             return;
         }
+
         if (Files.exists(Paths.get(this.staticResourcesPath, request.getUri().substring(1)))) {
             staticResourcesProcessor.execute(sessionId, request, response);
             return;

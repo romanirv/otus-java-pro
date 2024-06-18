@@ -14,7 +14,7 @@ public class DefaultOptionsProcessor implements RequestProcessor {
 
     @Override
     public void execute(String sessionId, HttpRequest request, HttpResponse response) throws IOException {
-        logger.info("{} - Execute DefaultOptionsProcessor", sessionId);
+        logger.info("{} - Execute request", sessionId);
 
         response.setStatusCode(HttpStatus.NO_CONTENT);
         response.setHeader("Connection", "keep-alive");

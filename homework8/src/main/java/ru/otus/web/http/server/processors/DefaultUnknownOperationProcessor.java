@@ -15,7 +15,7 @@ public class DefaultUnknownOperationProcessor implements RequestProcessor {
 
     @Override
     public void execute(String sessionId, HttpRequest request, HttpResponse response) throws IOException {
-        logger.info("{} - Execute DefaultUnknownOperationProcessor", sessionId);
+        logger.info("{} - Execute request", sessionId);
 
         response.setStatusCode(HttpStatus.OK);
         response.setHeader("Content-Type", "text/html");
