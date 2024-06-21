@@ -10,4 +10,6 @@ public class HttpRequestUtils {
         Optional<String> accept = request.getHeader("Accept");
         return accept.isEmpty() || Arrays.asList(accept.get().split(", ")).contains(exceptedAcceptValue);
     }
+
+    private HttpRequestUtils() { }
 }

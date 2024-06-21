@@ -35,8 +35,9 @@ public class HttpRequest {
                 this.parseBody(lines, requestHeaderEndIdx + 1);
             }
         }
-
-        logger.debug("\n{}", rawRequest.strip());
+        if (logger.isDebugEnabled()) {
+            logger.debug("\n{}", rawRequest.strip());
+        }
         logger.trace("HTTP Method: {} URI: {}\nParameters: {}\n Headers: {} Body: {}", method, uri, parameters, headers, body);
     }
 

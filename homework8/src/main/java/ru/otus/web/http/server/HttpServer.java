@@ -34,7 +34,7 @@ public class HttpServer {
 
     public void start() {
         ExecutorService executorService = Executors.newFixedThreadPool(4);
-        requestBuffer = new ThreadLocal<>();
+        requestBuffer = ThreadLocal.withInitial(() -> new byte[DEFAULT_BUFFER_SIZE]);
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             logger.info("Server listen port: {}", port);
             this.dispatcher = new Dispatcher(this.staticResourcePath);
@@ -46,6 +46,7 @@ public class HttpServer {
         } catch (Exception e) {
             logger.error("Error while starting server: {}", e.getLocalizedMessage());
         } finally {
+            requestBuffer.remove();
             executorService.shutdown();
         }
     }
@@ -78,14 +79,12 @@ public class HttpServer {
                 response.writeToStream(socket.getOutputStream());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error during request execution: {}", e.getLocalizedMessage());
         } finally {
             try {
-                if (socket != null) {
-                    socket.close();
-                }
+                socket.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error("Socket close execution: {}", e.getLocalizedMessage());
             }
         }
     }

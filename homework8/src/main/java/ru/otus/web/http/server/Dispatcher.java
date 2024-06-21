@@ -50,7 +50,7 @@ public class Dispatcher {
             return;
         }
 
-        if (Files.exists(Paths.get(this.staticResourcesPath, request.getUri().substring(1)))) {
+        if (Files.exists(Paths.get(staticResourcesPath, request.getUri().substring(1)))) {
             staticResourcesProcessor.execute(sessionId, request, response);
             return;
         }

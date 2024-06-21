@@ -2,7 +2,6 @@ package ru.otus.web.http.server.application;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.otus.web.http.server.HttpServer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,4 +30,6 @@ public class Storage {
         item.setId(UUID.randomUUID());
         items.add(item);
     }
+
+    private Storage() { }
 }
