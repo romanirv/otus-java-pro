@@ -7,13 +7,43 @@
     <display-name>Archetype Created Web Application</display-name>
 
     <servlet>
-        <servlet-name>CalcServlet</servlet-name>
-        <servlet-class>ru.otus.jee.servlets.CalcServlet</servlet-class>
+        <servlet-name>AddServlet</servlet-name>
+        <servlet-class>ru.otus.jee.servlets.AddServlet</servlet-class>
     </servlet>
 
     <servlet-mapping>
-        <servlet-name>CalcServlet</servlet-name>
-        <url-pattern>/calc</url-pattern>
+        <servlet-name>AddServlet</servlet-name>
+        <url-pattern>/add</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>SubtractServlet</servlet-name>
+        <servlet-class>ru.otus.jee.servlets.SubtractServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>SubtractServlet</servlet-name>
+        <url-pattern>/subtract</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>MultiplyServlet</servlet-name>
+        <servlet-class>ru.otus.jee.servlets.MultiplyServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>MultiplyServlet</servlet-name>
+        <url-pattern>/multiply</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>DivServlet</servlet-name>
+        <servlet-class>ru.otus.jee.servlets.DivServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>DivServlet</servlet-name>
+        <url-pattern>/div</url-pattern>
     </servlet-mapping>
 
 </web-app>
