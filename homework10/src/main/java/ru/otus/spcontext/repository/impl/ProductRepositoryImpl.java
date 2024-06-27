@@ -1,8 +1,5 @@
 package ru.otus.spcontext.repository.impl;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.stereotype.Component;
 import ru.otus.spcontext.entiry.Product;
 import ru.otus.spcontext.repository.ProductRepository;
 
@@ -17,6 +14,7 @@ public class ProductRepositoryImpl implements ProductRepository {
     public ProductRepositoryImpl() {
         products = new ArrayList<>();
     }
+
 
     public void save(Product product) {
         products.add(product);
