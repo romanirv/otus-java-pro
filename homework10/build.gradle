@@ -1,9 +1,8 @@
 plugins {
     id 'java'
-    id 'war'
 }
 
-group = 'ru.outs.jee'
+group = 'ru.outs.spconetx'
 version = '1.0-SNAPSHOT'
 
 repositories {
