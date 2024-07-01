@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CartManager {
 
@@ -25,19 +26,20 @@ public class CartManager {
     public void start() throws IOException {
         showSupportedCommands();
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        String inputLine;
-        while (true) {
-            System.out.print( "> " );
-            inputLine = reader.readLine();
-            Optional<Command> command = parseCommand(inputLine);
-            if (command.isEmpty()) {
-                System.out.println("Unsupported command.");
-            } else {
-                if (command.get().commandType == CommandType.EXIT) {
-                    break;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
+            String inputLine;
+            while (true) {
+                System.out.print("> ");
+                inputLine = reader.readLine();
+                Optional<Command> command = parseCommand(inputLine);
+                if (command.isEmpty()) {
+                    System.out.println("Unsupported command.");
+                } else {
+                    if (command.get().commandType == CommandType.EXIT) {
+                        break;
+                    }
+                    handleCommand(command.get());
                 }
-                handleCommand(command.get());
             }
         }
     }
@@ -45,12 +47,8 @@ public class CartManager {
     private void showSupportedCommands() {
         System.out.println("Supported commands:");
         System.out.println("===================");
-        System.out.println("'" + CommandType.SHOW_ALL_PRODUCTS.command + "'             - show all existing products");
-        System.out.println("'" + CommandType.CREATE_NEW_CART.command + "'               - create new cart");
-        System.out.println("'" + CommandType.ADD_PRODUCT.command + "':'<product_id>'    - add new product to cart");
-        System.out.println("'" + CommandType.DELETE_PRODUCT.command + "':'<product_id>' - delete product from cart");
-        System.out.println("'" + CommandType.SHOW_CART.command + "'                     - show all products from cart");
-        System.out.println("'" + CommandType.DELETE_CART.command + "'                   - delete cart");
+        Arrays.stream(CommandType.values()).forEach(c ->
+                System.out.println("'" + c.command + "' - " + c.getDescription()));
     }
 
     private Optional<Command> parseCommand(String inputLine) {
@@ -66,14 +64,7 @@ public class CartManager {
             return Optional.empty();
         }
 
-        Optional<Long> value = Optional.empty();
-        if (parts.length > 1) {
-            try {
-                value = Optional.of(Long.parseLong(parts[1]));
-            } catch (NumberFormatException e) {
-                return Optional.empty();
-            }
-        }
+        Optional<Long> value = Optional.ofNullable(parts.length > 1 ? Long.valueOf(parts[1]) : null);
         return Optional.of(new Command(commandType.get(), value));
     }
 
@@ -121,7 +112,7 @@ public class CartManager {
     }
 
     private void showCartHandle() {
-        if (currentCart.isEmpty()) {
+        if (isCartPresent()) {
             System.out.println("Cart not created!");
             return;
         }
@@ -152,7 +143,7 @@ public class CartManager {
         if (command.value.isEmpty()) {
             System.out.println("Input format error, required 'product id'");
         } else {
-            if (currentCart.isEmpty()) {
+            if (isCartPresent()) {
                 System.out.println("Cart not created!");
             } else {
                 System.out.println(currentCart.get().removeProduct(command.value.get()) ? "delete product success"
@@ -162,13 +153,20 @@ public class CartManager {
     }
 
     private void deleteCartHandle() {
-        if (currentCart.isEmpty()) {
+        if (isCartPresent()) {
             System.out.println("Cart not created!");
         } else {
             currentCart = Optional.empty();
             System.out.println("Cart removed!");
         }
+    }
 
+    private boolean isCartPresent() {
+        if (this.currentCart.isEmpty()) {
+            System.out.println("Cart not created!");
+            return false;
+        }
+        return true;
     }
 
     static class Command {
@@ -198,6 +196,33 @@ public class CartManager {
         DELETE_PRODUCT("delete product"),
         DELETE_CART("delete cart"),
         EXIT("exit");
+
+        public String getDescription() {
+            switch (this) {
+                case SHOW_ALL_PRODUCTS -> {
+                    return "show all existing products";
+                }
+                case CREATE_NEW_CART -> {
+                    return "create new cart";
+                }
+                case ADD_PRODUCT -> {
+                    return "':'<product_id>' - add new product to cart";
+                }
+                case DELETE_PRODUCT -> {
+                    return "':'<product_id>' - delete product from cart";
+                }
+                case SHOW_CART -> {
+                    return "show all products from cart";
+                }
+                case DELETE_CART -> {
+                    return "delete cart";
+                }
+                case EXIT -> {
+                    return "exit";
+                }
+                default -> throw new IllegalStateException("Unexpected value: " + this);
+            }
+        }
 
         final String command;
         CommandType(String command) {
