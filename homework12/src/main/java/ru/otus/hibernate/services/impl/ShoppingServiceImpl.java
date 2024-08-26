@@ -7,44 +7,55 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import ru.otus.hibernate.entities.Customer;
 import ru.otus.hibernate.entities.Product;
-import ru.otus.hibernate.repository.AbstractRepository;
+import ru.otus.hibernate.exceptions.DataError;
+import ru.otus.hibernate.exceptions.InputFormatError;
+import ru.otus.hibernate.repository.impl.CustomerRepository;
+import ru.otus.hibernate.repository.impl.ProductRepository;
 import ru.otus.hibernate.services.ShoppingService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.invoke.MethodHandles;
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @AllArgsConstructor
 public class ShoppingServiceImpl implements ShoppingService {
     private static final Log LOGGER = LogFactory.getLog(MethodHandles.lookup().lookupClass());
 
-    private final AbstractRepository<Product> productRepository;
+    private final ProductRepository productRepository;
 
-    private final AbstractRepository<Customer> customerRepository;
+    private final CustomerRepository customerRepository;
 
     public void start() throws IOException {
-        LOGGER.info("Start shopping service ...");
-        showSupportedCommands();
+        LOGGER.debug("Start shopping service ...");
 
+        showSupportedCommands();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
             String inputLine;
             while (true) {
                 System.out.print("> ");
                 inputLine = reader.readLine();
-                Optional<Command> command = parseCommand(inputLine);
-                if (command.isEmpty()) {
-                    System.out.println("Unknown command");
-                } else {
-                    if (command.get().commandType == CommandType.EXIT) {
-                        return;
+                LOGGER.debug("Read command:" + inputLine);
+
+                try {
+                    Optional<Command> command = parseCommand(inputLine);
+                    if (command.isEmpty()) {
+                        System.out.println("Unknown command");
+                    } else {
+                        if (command.get().commandType == CommandType.EXIT) {
+                            return;
+                        }
+                        handleCommand(command.get());
                     }
-                    handleCommand(command.get());
+                } catch (InputFormatError e) {
+                    System.out.println("Input format error!");
+                } catch (DataError e) {
+                    System.out.println(e.getLocalizedMessage());
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }
@@ -54,10 +65,9 @@ public class ShoppingServiceImpl implements ShoppingService {
         System.out.println("Supported commands:");
         System.out.println("===================");
         Arrays.stream(CommandType.values()).forEach(c -> System.out.println(c.getDescription()));
-
     }
 
-    private Optional<Command> parseCommand(String inputLine) {
+    private Optional<Command> parseCommand(String inputLine) throws InputFormatError {
         if (inputLine.isEmpty()) {
             return Optional.empty();
         }
@@ -70,11 +80,15 @@ public class ShoppingServiceImpl implements ShoppingService {
             return Optional.empty();
         }
 
-        Optional<Long> value = Optional.ofNullable(parts.length > 1 ? Long.valueOf(parts[1]) : null);
-        return Optional.of(new Command(commandType.get(), value));
+        try {
+            Optional<Long> value = Optional.ofNullable(parts.length > 1 ? Long.valueOf(parts[1]) : null);
+            return Optional.of(new Command(commandType.get(), value));
+        } catch (NumberFormatException e) {
+            throw new InputFormatError();
+        }
     }
 
-    private void handleCommand(Command command) {
+    private void handleCommand(Command command) throws InputFormatError, DataError {
         switch (command.commandType) {
             case SHOW_ALL_PRODUCTS -> {
                 showAllProductsHandle();
@@ -83,39 +97,19 @@ public class ShoppingServiceImpl implements ShoppingService {
                 showAllCustomersHandle();
             }
             case SHOW_BOUGHT_BY_CUSTOMER_PRODUCTS -> {
-                if (command.value.isPresent()) {
-                    showBoughtByCustomerProducts(command.value.get());
-                } else {
-                    System.out.println("Format error");
-                }
+                showBoughtByCustomerProducts(command.value.orElseThrow(InputFormatError::new));
             }
             case SHOW_CUSTOMERS_BOUGHT_PRODUCT -> {
-                if (command.value.isPresent()) {
-                    showCustomersBoughtProduct(command.value.get());
-                } else {
-                    System.out.println("Format error");
-                }
+                showCustomersBoughtProduct(command.value.orElseThrow(InputFormatError::new));
             }
             case PRODUCTS_DETAIL -> {
-                if (command.value.isPresent()) {
-                    productsDetails(command.value.get());
-                } else {
-                    System.out.println("Format error");
-                }
+                productsDetails(command.value.orElseThrow(InputFormatError::new));
             }
             case DELETE_PRODUCT_BY_ID -> {
-                if (command.value.isPresent()) {
-                    deleteProductById(command.value.get());
-                } else {
-                    System.out.println("Format error");
-                }
+                deleteProductById(command.value.orElseThrow(InputFormatError::new));
             }
             case DELETE_CUSTOMER_BY_ID -> {
-                if (command.value.isPresent()) {
-                    deleteCustomerById(command.value.get());
-                } else {
-                    System.out.println("Format error");
-                }
+                deleteCustomerById(command.value.orElseThrow(InputFormatError::new));
             }
             default -> {
                 System.out.println("Unsupported command.");
@@ -124,78 +118,64 @@ public class ShoppingServiceImpl implements ShoppingService {
     }
 
     private void showAllProductsHandle() {
-        List<Product> productList = productRepository.findAll();
-        System.out.println("Products list:");
-        System.out.println("=====================");
+        List<Product> productList = productRepository.findAllLazy();
+        System.out.println("Products: [");
         productList.forEach(System.out::println);
-    }
-
-    private void showAllCustomersHandle() {
-        List<Customer> customerList = customerRepository.findAll();
-        System.out.println("Customers list:");
-        System.out.println("=====================");
-        customerList.forEach(System.out::println);
-    }
-
-    private void showBoughtByCustomerProducts(Long productId) {
-        try {
-            Optional<Product> product = productRepository.findById(productId, true);
-            if (product.isEmpty()) {
-                System.out.println("Product is not found!");
-                return;
-            }
-            System.out.println("Customers: [");
-            product.get().getCustomers().forEach(System.out::println);
-            System.out.println("]");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void showCustomersBoughtProduct(Long customerId) {
-        try {
-            Optional<Customer> customer = customerRepository.findById(customerId, true);
-            if (customer.isEmpty()) {
-                System.out.println("Customer not found!");
-                return;
-            }
-
-            System.out.println("Products=[");
-            customer.get().getProducts().forEach(System.out::println);
-            System.out.println("]");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void productsDetails(Long customerId) {
-        Optional<Customer> customer = customerRepository.findById(customerId, true);
-        if (customer.isEmpty()) {
-            System.out.println("Customer: " + customerId + " not found!");
-            return;
-        }
-
-        System.out.println("Products detail: [");
-        for (Map.Entry<String, BigDecimal> entry: customer.get().getProductsDetail().entrySet()) {
-            System.out.println("{" + entry.getKey() + ": " + entry.getValue() + "}");
-        }
         System.out.println("]");
     }
 
-    private void deleteProductById(Long productId) {
-        if (productRepository.deleteById(productId)) {
-            System.out.println("Product " + productId + " was deleted!");
-        } else {
-            System.out.println("Product " + productId + " delete error!");
-        }
+    private void showAllCustomersHandle() {
+        List<Customer> customerList = customerRepository.findAllLazy();
+        System.out.println("Customers: [");
+        customerList.forEach(System.out::println);
+        System.out.println("]");
     }
 
-    private void deleteCustomerById(Long customerId) {
-        if (customerRepository.deleteById(customerId)) {
-            System.out.println("Customer " + customerId + " was deleted!");
-        } else {
-            System.out.println("Customer " + customerId + " delete error!");
+    private void showBoughtByCustomerProducts(Long productId) throws DataError {
+        Optional<Product> product = productRepository.findByIdAndLoad(productId);
+        if (product.isEmpty()) {
+            throw new DataError("Product" + productId + " not found!");
         }
+
+        System.out.println("Customers: [");
+        product.get().getCustomers().forEach(System.out::println);
+        System.out.println("]");
+    }
+
+    private void showCustomersBoughtProduct(Long customerId) throws DataError {
+        Optional<Customer> customer = customerRepository.findByIdAndLoad(customerId);
+        if (customer.isEmpty()) {
+            throw new DataError("Customer: " + customerId + " not found!");
+        }
+
+        System.out.println("Products=[");
+        customer.get().getProducts().forEach(System.out::println);
+        System.out.println("]");
+    }
+
+    private void productsDetails(Long customerId) throws DataError {
+        Optional<Customer> customer = customerRepository.findByIdAndLoad(customerId);
+        if (customer.isEmpty()) {
+            throw new DataError("Customer: " + customerId + " not found!");
+        }
+
+        System.out.println("Products detail: [");
+        customer.get().getProductsDetail().forEach((key, value) -> System.out.println("{" + key + ": " + value + "}"));
+        System.out.println("]");
+    }
+
+    private void deleteProductById(Long productId) throws DataError{
+        if (productRepository.deleteById(productId)) {
+           throw new DataError("Product " + productId + " not found");
+        }
+        System.out.println("Product " + productId + " delete error!");
+    }
+
+    private void deleteCustomerById(Long customerId) throws DataError {
+        if (customerRepository.deleteById(customerId)) {
+            throw new DataError("Customer " + customerId + " nor found");
+        }
+        System.out.println("Customer " + customerId + " delete error!");
     }
 
     @Getter

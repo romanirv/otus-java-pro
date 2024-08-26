@@ -21,10 +21,7 @@ public class Customer extends AbstractEntity {
 
     @ManyToMany(fetch = FetchType.LAZY,
             cascade = {
-//            CascadeType.DETACH,
             CascadeType.MERGE})
-//            CascadeType.REFRESH,
-//            CascadeType.PERSIST})
     @JoinTable(name = "customers_and_products",
             inverseJoinColumns = @JoinColumn(name = "product_id", nullable = false),
             joinColumns = @JoinColumn(name = "customer_id", nullable = false),
