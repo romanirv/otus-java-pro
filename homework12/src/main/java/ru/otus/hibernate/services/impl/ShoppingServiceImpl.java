@@ -14,8 +14,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.invoke.MethodHandles;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @AllArgsConstructor
@@ -95,7 +97,11 @@ public class ShoppingServiceImpl implements ShoppingService {
                 }
             }
             case PRODUCTS_DETAIL -> {
-                productsDetails();
+                if (command.value.isPresent()) {
+                    productsDetails(command.value.get());
+                } else {
+                    System.out.println("Format error");
+                }
             }
             case DELETE_PRODUCT_BY_ID -> {
                 if (command.value.isPresent()) {
@@ -162,8 +168,18 @@ public class ShoppingServiceImpl implements ShoppingService {
         }
     }
 
-    private void productsDetails() {
+    private void productsDetails(Long customerId) {
+        Optional<Customer> customer = customerRepository.findById(customerId, true);
+        if (customer.isEmpty()) {
+            System.out.println("Customer: " + customerId + " not found!");
+            return;
+        }
 
+        System.out.println("Products detail: [");
+        for (Map.Entry<String, BigDecimal> entry: customer.get().getProductsDetail().entrySet()) {
+            System.out.println("{" + entry.getKey() + ": " + entry.getValue() + "}");
+        }
+        System.out.println("]");
     }
 
     private void deleteProductById(Long productId) {
@@ -201,7 +217,7 @@ public class ShoppingServiceImpl implements ShoppingService {
         SHOW_ALL_CUSTOMERS("show customers"),
         SHOW_BOUGHT_BY_CUSTOMER_PRODUCTS("products"),
         SHOW_CUSTOMERS_BOUGHT_PRODUCT("customers"),
-        PRODUCTS_DETAIL("details"),
+        PRODUCTS_DETAIL("product details"),
         DELETE_PRODUCT_BY_ID("delete product"),
         DELETE_CUSTOMER_BY_ID("delete customer"),
         EXIT("exit");
@@ -227,7 +243,7 @@ public class ShoppingServiceImpl implements ShoppingService {
                     return "'" + DELETE_CUSTOMER_BY_ID.typeName + "':'<customer_id>' - delete customer by id";
                 }
                 case PRODUCTS_DETAIL -> {
-                    return "'" + PRODUCTS_DETAIL.typeName + "' - products detail map";
+                    return "'" + PRODUCTS_DETAIL.typeName + "':'<customer_id>' - products detail map";
                 }
                 case EXIT -> {
                     return "'exit'";

@@ -29,11 +29,23 @@ public class EntityUtils {
         }
     }
 
+    public static <T> T findById(SessionFactory sessionFactory, Class<T> cls, Long id) {
+        try (Session session = sessionFactory.getCurrentSession()) {
+            session.beginTransaction();
+            return session.get(cls, id);
+//            if (entity != null) {
+//                Hibernate.initialize(product.getCustomers());
+//            }
+//            return product != null ? Optional.of(product) : Optional.empty();
+        }
+
+    }
+
     public static <T> boolean deleteById(SessionFactory sessionFactory, Class<T> cls, Long id) {
         try (Session session = sessionFactory.getCurrentSession()) {
             session.beginTransaction();
             boolean result = false;
-            T entity = session.get(cls, id);
+            T entity = session.find(cls, id);
             if (entity != null) {
                 session.remove(entity);
                 result = true;

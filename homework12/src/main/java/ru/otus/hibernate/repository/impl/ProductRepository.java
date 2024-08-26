@@ -17,8 +17,8 @@ public class ProductRepository implements AbstractRepository<Product> {
     private final SessionFactory sessionFactory;
 
     @Override
-    public void insert(Product product) {
-        EntityUtils.insert(sessionFactory, product);
+    public Product insert(Product product) {
+        return EntityUtils.insert(sessionFactory, product);
     }
 
     @Override
@@ -30,7 +30,7 @@ public class ProductRepository implements AbstractRepository<Product> {
     public Optional<Product> findById(Long id, boolean isLoadAll) {
         try (Session session = sessionFactory.getCurrentSession()) {
             session.beginTransaction();
-            Product product = session.get(Product.class, id);
+            Product product = session.getReference(Product.class, id);
             if (product != null && isLoadAll) {
                 Hibernate.initialize(product.getCustomers());
             }
