@@ -30,6 +30,7 @@ public abstract class AbstractRepository<T> {
         try (Session session = sessionFactory.getCurrentSession()) {
             Transaction transaction = session.beginTransaction();
             boolean result = false;
+            /// TODO!:
             T entity = session.find(cls, id);
             if (entity != null) {
                 session.remove(entity);

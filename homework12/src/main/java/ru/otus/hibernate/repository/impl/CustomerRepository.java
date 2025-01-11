@@ -28,13 +28,38 @@ public class CustomerRepository extends AbstractRepository<Customer> {
             Customer customer = session.getReference(Customer.class, customerId);
             Product product = session.getReference(Product.class, productId);
 
+//            session.createNativeQuery("INSERT INTO customer_and_products VALUES()")
+
             ///!TODO: к сожалению, чтобы добавить новый продукт к существующему покупателю,
             /// получается необходимо загрузить все существующие продукты, а затем добавить новый, проблема N+1,
             /// правильное решение пока не нашел.
-            customer.getProducts().add(product);
-            customer.getProductsDetail().put(product.getName(), product.getCost());
+//            customer.getProducts().add(product);
+//            customer.getProductsDetail().put(product.getName(), product.getCost());
 
-            session.merge(customer);
+//            Map<BigDecimal, String> productDetails = new HashMap<>();
+//            customer.getProductsDetail().forEach((k, v) -> productDetails.put(v, k));
+
+            session.createNativeQuery("INSERT INTO customers_and_products(" +
+                            "customer_id, product_id) VALUES(:customer_id, :product_id)")
+                    .setParameter("product_id", productId)
+                    .setParameter("customer_id", customerId)
+                    .executeUpdate();
+
+            session.createNativeQuery("INSERT INTO products_detail(" +
+                            "cost, customer_id, products_name) VALUES(:cost, :customer_id, :products_name)")
+                    .setParameter("cost", product.getCost())
+                    .setParameter("customer_id", customer.getId())
+                    .setParameter("products_name", product.getName())
+                    .executeUpdate();
+
+//            String hql = "update Customer c set c.products = :products, c.productsDetail = :productsDetail where c.id = :id";
+//            session.createQuery(hql)
+//                    .setParameter("products", customer.getProducts())
+//                    .setParameter("productsDetail", productDetails)
+//                    .setParameter("id", customer.getId())
+//                    .executeUpdate();
+
+//            session.merge(customer);
 
             transaction.commit();
         }

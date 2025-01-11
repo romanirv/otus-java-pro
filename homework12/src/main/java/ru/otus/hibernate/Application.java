@@ -38,6 +38,8 @@ public class Application {
 			LOGGER.error("Initializer error: " + e.getLocalizedMessage());
 		} catch (java.io.IOException e) {
 			throw new RuntimeException(e);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
