@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
+                                 https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
+             version="3.0">
+
+    <persistence-unit name="SingleUnit" transaction-type="RESOURCE_LOCAL">
+        <!-- (1) Сущности -->
+        <class>ru.otus.jpql.entities.Address</class>
+        <class>ru.otus.jpql.entities.Client</class>
+        <class>ru.otus.jpql.entities.Phone</class>
+
+        <!-- (2) Настройки подключения -->
+        <properties>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:postgresql://localhost:5432/test_jpql_db"/>
+            <property name="jakarta.persistence.jdbc.user" value="postgres"/>
+            <property name="jakarta.persistence.jdbc.password" value="postgres"/>
+            <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver"/>
+
+            <!-- (3) Настройки Hibernate -->
+            <!-- с версии Hibernate 5.x не указывается: <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/> -->
+            <property name="hibernate.hbm2ddl.auto" value="none"/>
+
+            <!-- (4) Логирование SQL запросов -->
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+
+            <!-- (5) Параметры пула HikariCP -->
+            <property name="hibernate.hikari.maximumPoolSize" value="20"/> <!-- Макс. кол-во соединений в пуле. Значение зависит от предполагаемой нагрузки на приложение. -->
+            <property name="hibernate.hikari.idleTimeout" value="30000"/> <!-- Время (мс), через которое неактивное соединение будет считаться устаревшим и может быть закрыто. -->
+            <property name="hibernate.hikari.connectionTimeout" value="30000"/> <!-- Время ожидания (мс) на получение нового соединения из пула. Если время истекает, выбрасывается исключение. -->
+            <property name="hibernate.hikari.maxLifetime" value="1800000"/> <!-- Макс. время жизни соединения в пуле. По истечении этого времени соединение будет закрыто. -->
+            <property name="hibernate.hikari.validationTimeout" value="5000"/> <!-- Время (мс), в течение которого пул будет проверять соединения перед их использованием, чтобы убедиться, что они валидны. -->
+            <property name="hibernate.hikari.leakDetectionThreshold" value="15000"/> <!-- Время (мс), через которое будет выполнен контроль утечек соединений (если соединение не было возвращено в пул). -->
+
+        </properties>
+    </persistence-unit>
+</persistence>
