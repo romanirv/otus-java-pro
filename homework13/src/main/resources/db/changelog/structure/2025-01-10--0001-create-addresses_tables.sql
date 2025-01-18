@@ -1,0 +1,4 @@
+CREATE TABLE addresses (
+    id UUID PRIMARY KEY NOT NULL,
+    street VARCHAR(150) NOT NULL
+);
