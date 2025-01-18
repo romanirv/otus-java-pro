@@ -21,11 +21,7 @@ public class ClientRepositoryImpl implements ClientRepository {
         try (EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager()) {
             EntityTransaction entityTransaction = entityManager.getTransaction();
             entityTransaction.begin();
-
-            entityManager.persist(client.getAddress());
             entityManager.persist(client);
-            client.getPhones().forEach(entityManager::persist);
-
             entityTransaction.commit();
         }
     }

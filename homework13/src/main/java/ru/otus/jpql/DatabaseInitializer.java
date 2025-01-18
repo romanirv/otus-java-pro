@@ -37,16 +37,10 @@ public class DatabaseInitializer {
 
             entityManager.getTransaction().begin();
 
-//            entityManager.createNativeQuery("TRUNCATE phones, addresses");
-
-//            entityManager.createNativeQuery("DELETE FROM categories WHERE name NOT IN ('Development', 'Architecture', 'DevOps', 'Analysis', 'Design')")
-//                    .executeUpdate();
             LOGGER.info("Rows deleted from all tables table.");
 
             logTableContents(entityManager, "Phone");
             logTableContents(entityManager, "Address");
-//            logTableContents(entityManager, "Course");
-//            logTableContents(entityManager, "Student");
 
             entityManager.getTransaction().commit();
 
