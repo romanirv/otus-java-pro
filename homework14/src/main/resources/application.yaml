@@ -1,0 +1,17 @@
+server:
+  port: 8189
+
+spring:
+  application:
+    name: homework14
+  liquibase:
+    change-log: db.changelog/db.changelog-master.yaml
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/spring_jdbc_db
+    username: postgres
+    password: postgres
+
+logging:
+  level:
+    org.springframework.jdbc.core.JdbcTemplate: TRACE
