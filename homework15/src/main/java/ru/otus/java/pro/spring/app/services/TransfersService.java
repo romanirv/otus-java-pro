@@ -87,7 +87,7 @@ public class TransfersService {
                         "Account not found!", "EXECUTE_TRANSFER_ERROR"
                 ));
         if (account.isBlocked()) {
-            throw new BusinessLogicException("Source account is blocked!", "EXECUTE_TRANSFER_ERROR");
+            throw new BusinessLogicException("Account is blocked!", "EXECUTE_TRANSFER_ERROR");
         }
         return account;
     }
