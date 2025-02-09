@@ -84,7 +84,7 @@ public class TransfersService {
         Account account = accountsRepository
                 .findByNumberAndClientId(accountNumber, clientId)
                 .orElseThrow(() -> new BusinessLogicException(
-                        "Source account not found!", "EXECUTE_TRANSFER_ERROR"
+                        "Account not found!", "EXECUTE_TRANSFER_ERROR"
                 ));
         if (account.isBlocked()) {
             throw new BusinessLogicException("Source account is blocked!", "EXECUTE_TRANSFER_ERROR");
