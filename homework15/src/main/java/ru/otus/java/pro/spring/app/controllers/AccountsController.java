@@ -6,7 +6,7 @@ import ru.otus.java.pro.spring.app.dtos.AccountDto;
 import ru.otus.java.pro.spring.app.dtos.AccountsPagesDto;
 import ru.otus.java.pro.spring.app.entities.Account;
 import ru.otus.java.pro.spring.app.exceptions_handling.ResourceNotFoundException;
-import ru.otus.java.pro.spring.app.services.AccountsService;
+import ru.otus.java.pro.spring.app.services.impl.AccountsServiceImpl;
 
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/accounts")
 public class AccountsController {
 
-    private final AccountsService accountsService;
+    private final AccountsServiceImpl accountsService;
 
     private static final Function<Account, AccountDto> ENTITY_TO_DTO = a -> new AccountDto(a.getId(), a.getNumber(),
             a.getClientId(), a.getBalance(), a.isBlocked());

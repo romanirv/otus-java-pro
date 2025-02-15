@@ -1,16 +1,17 @@
-package ru.otus.java.pro.spring.app.services;
+package ru.otus.java.pro.spring.app.services.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.otus.java.pro.spring.app.entities.Account;
 import ru.otus.java.pro.spring.app.repositories.AccountsRepository;
+import ru.otus.java.pro.spring.app.services.AccountService;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class AccountsService {
+public class AccountsServiceImpl implements AccountService {
 
     private final AccountsRepository accountsRepository;
 
