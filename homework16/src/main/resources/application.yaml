@@ -1,0 +1,10 @@
+server:
+  port: 8189
+spring:
+  application:
+    name: homework16
+
+data:
+  filename: static/sms.json
+
+
